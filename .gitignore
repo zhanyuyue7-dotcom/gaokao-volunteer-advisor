@@ -1,0 +1,22 @@
+# OS/editor noise
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+
+# Local archives and generated files
+*.zip
+*.7z
+*.rar
+tmp/
+dist/
+build/
+
+# Private contact assets
+wx.jpg
+wechat*.jpg
+wechat*.png
+qrcode*.jpg
+qrcode*.png
+

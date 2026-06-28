@@ -1,0 +1,4 @@
+interface:
+  display_name: "高考志愿填报"
+  short_description: "证据化位次优先的高考志愿填报工作流"
+  default_prompt: "Use $gaokao-volunteer-advisor to analyze a gaokao volunteer application case with rank-first, evidence-backed recommendations."
