@@ -1,110 +1,324 @@
 # Gaokao Volunteer Advisor
 
-> 位次优先、证据驱动、风险可解释的高考志愿填报辅助工作流。
+> A rank-first, evidence-backed decision workflow for China's gaokao volunteer application planning.  
+> 位次优先、证据驱动、风险可解释的高考志愿决策辅助系统。
 
-`gaokao-volunteer-advisor` 是一个面向高考志愿填报场景的 Codex Skill。它把学生画像、官方招生数据、院校/专业质量、专业组风险、校园体验和家长沟通拆成一套阶段化流程，帮助学生和家庭做更稳妥、更透明的志愿决策。
+`gaokao-volunteer-advisor` is not a generic "recommend some schools" prompt.
 
-这个 skill 不承诺录取，也不替代省考试院官方填报系统。它的目标是让每一个推荐都能说清楚：**为什么选、风险在哪、证据来自哪里、下一步该复核什么**。
+It is a stage-gated Codex Skill designed for high-stakes gaokao volunteer planning, where every recommendation must be grounded in rank data, official admission rules, hard constraints, school/major quality, city opportunity, campus experience, and reviewable evidence.
 
-## What It Does
+The goal is simple:
 
-- **位次优先**：用位次/位次区间判断风险，避免只看分数造成误判。
-- **分阶段工作流**：从学生画像 intake 到官方数据、院校专业质量、校园生活、风险评分、飞书表格输出逐步推进。
-- **冲稳保解释**：把 `reach / match / safety / blocked` 拆开，不把风险揉成一个模糊总分。
-- **证据约束**：官方数据优先，社交平台只作为体验和风险信号。
-- **硬约束检查**：预算、地域、体检、外语语种、中外合作、异地校区、大类招生等单独标记。
-- **家长沟通友好**：保留学生和家庭的体面，不用刺激性标签描述高平台冲刺志愿。
-- **平台型排序**：同等安全性下，优先考虑学校平台、城市机会、专业就业和专业组干净程度。
+> **Turn a chaotic volunteer-list discussion into a conservative, auditable, parent-friendly decision process.**
 
-## Core Principles
+This project can be used as the reasoning layer behind the `985小岳聊AI` gaokao volunteer evaluation service on Douyin.
 
-1. **No admission guarantee**  
-   不承诺录取，不替代官方系统。
+---
 
-2. **Rank before score**  
-   判断风险时优先使用位次，而不是裸分。
+## Why This Exists
 
-3. **Evidence before scoring**  
-   没有官方依据，不做正式录取安全判断。
+Most gaokao volunteer advice fails in one of three ways:
 
-4. **Separate dimensions**  
-   学校平台、专业价值、录取安全、城市机会、校园体验、舆情风险、证据置信度必须分开看。
+1. It talks about schools by reputation, not by admission unit and rank margin.
+2. It mixes school quality, major value, city opportunity, family preference, and admission safety into one vague opinion.
+3. It gives a confident-looking list without showing the evidence chain or review gaps.
 
-5. **Keep blocked items visible**  
-   被硬约束阻断的志愿不放进有效志愿表，但保留在审计列表里说明原因。
+This skill takes the opposite approach.
 
-## Workflow
+It separates the decision into clear layers:
+
+| Layer | Question |
+| --- | --- |
+| Admission Safety | Is this option plausible for the student's rank range? |
+| School Platform | What is the institution's title, recognition, and long-term signaling value? |
+| Major Value | Is the target major strong, practical, transferable, and aligned with future path? |
+| City Opportunity | Does the city support internships, employment, industry access, and family preference? |
+| Professional Group Risk | Are there unwanted majors, large-category diversion risks, or adjustment traps? |
+| Hard Constraints | Does it violate budget, region, physical exam, language, campus, or school-type limits? |
+| Campus Experience | Are dormitory, management style, food, transport, and student sentiment acceptable? |
+| Evidence Confidence | Are claims official, current, consistent, and reviewable? |
+
+---
+
+## Core Positioning
+
+`gaokao-volunteer-advisor` is built for:
+
+- Students who need a clear `冲 / 稳 / 保` structure.
+- Parents who need risk explanation instead of empty reassurance.
+- Advisors who want a repeatable evidence workflow.
+- Content creators who need credible gaokao case analysis.
+- Decision-system builders who want formal gates before scoring or Feishu/Lark delivery.
+
+It does **not** promise admission.  
+It does **not** replace the provincial official application system.  
+It does **not** treat social media sentiment as admission fact.
+
+It helps users know:
+
+- What can be considered.
+- What should be blocked.
+- What is attractive but risky.
+- What still needs official verification.
+- What tradeoff the family is actually making.
+
+---
+
+## What Makes It Different
+
+### 1. Rank-first reasoning
+
+Admission risk is judged by `rank / 位次 / 位次区间` before raw score.  
+The workflow explicitly requires province, year, subject category, score, and rank interval before any formal admission-safety judgment.
+
+### 2. Stage gates before scoring
+
+The skill does not jump directly to a recommendation table.
+
+It requires:
 
 ```text
-Stage 0  Student Profile And Goal Definition
-Stage 1  Official Hard Data Foundation
-Stage 2  School And Major Quality
-Stage 3  Campus Life And Hidden Risk
-Stage 4  Crawling And Evidence Extraction
-Stage 5  Rational Scoring Model
-Stage 5.5 Formal Gate To LARK Handoff
-Stage 6  LARKCLI Feishu Base Sync
-Stage 7  Review, Delivery, And Learning Loop
-Stage 8  Closed-Book Backtest
+Student profile -> Official data -> Major/school quality -> Campus risk -> Evidence extraction -> Scoring -> Formal handoff
 ```
 
-## Stage 0 Intake
+If the evidence foundation is missing, it marks the gap instead of inventing confidence.
 
-推荐开始前，至少需要这些信息：
+### 3. Official evidence hierarchy
 
-| Type | Required Fields |
-| --- | --- |
-| 基础信息 | 年份、省份、科类/选科、分数、位次或位次区间 |
-| 地域偏好 | 省内/外省、排斥城市、气候、离家距离 |
-| 预算 | 学费、住宿费、生活费上限，是否接受高学费项目 |
-| 学校类型 | 民办、独立学院、中外合作、港澳/境外合作、异地校区 |
-| 专业偏好 | 喜欢方向、排斥方向、家长期待、大类招生接受度 |
-| 未来路径 | 就业、考研、保研、出国、考公、体制内、创业 |
-| 风险偏好 | 冲稳保比例，最不能接受滑档还是专业不喜欢 |
-| 硬约束 | 体检限制、色弱色盲、单科短板、外语语种、特殊专业限制 |
-| 生活偏好 | 宿舍、食堂、管理强度、早晚自习、查寝、跑操 |
-| 家庭分歧 | 学生和家长意见不一致的点 |
+Preferred sources:
+
+- Provincial exam authority
+- Ministry of Education / 阳光高考
+- University admission office
+- Admission brochure
+- Official enrollment plan
+- Official score-rank table
+- Historical admission data
+- Undergraduate teaching quality report
+- Employment quality report
+- Academic affairs / college / graduate school pages
+
+Social platforms such as Xiaohongshu, Zhihu, Bilibili, Weibo, and public accounts are treated only as campus-experience or sentiment-risk signals.
+
+### 4. Risk is not hidden inside one score
+
+The model separates:
+
+- `admission_safety`
+- `major_value`
+- `school_experience`
+- `sentiment_risk`
+- `evidence_confidence`
+- `hard_constraints`
+
+The output must explain max risk, evidence status, and next review action.
+
+### 5. Family-facing language
+
+The workflow avoids humiliating or emotionally provocative labels for high-upside志愿.
+
+Instead of blunt phrases, it uses tactful categories such as:
+
+- 高平台冲刺
+- 进阶冲刺
+- 高上限志愿
+- 低概率高回报
+- 展示上限的冲刺项
+
+This keeps the analysis honest while preserving family dignity.
+
+---
+
+## Stage-Gated Workflow
+
+```text
+Stage 0    Student Profile And Goal Definition
+Stage 1    Official Hard Data Foundation
+Stage 2    School And Major Quality
+Stage 3    Campus Life And Hidden Risk
+Stage 4    Crawling And Evidence Extraction
+Stage 5    Rational Scoring Model
+Stage 5.5  Formal Gate To LARK Handoff
+Stage 6    LARKCLI Feishu Base Sync
+Stage 7    Review, Delivery, And Learning Loop
+Stage 8    Closed-Book Backtest
+```
+
+### Stage 0: Intake
+
+The skill starts by classifying user inputs into:
+
+| Type | Meaning | Examples |
+| --- | --- | --- |
+| `block` | Cannot be violated | Budget cap, physical exam limit, rejected provinces, no Chinese-foreign cooperation |
+| `review` | Must be checked against official rules | Major-category diversion, transfer policy, remote campus, language requirement |
+| `preference` | Reorders options but does not block | Dormitory preference, city preference, food, management intensity |
+
+Minimum required intake:
+
+- Province, year, subject category or subject combo
+- Score and rank/rank interval
+- Budget and region preference
+- Major preference and future path
+- Risk preference for 冲/稳/保
+- Hard constraints
+- Lifestyle constraints
+- Family disagreement points
+
+### Stage 1-4: Evidence foundation
+
+Before scoring, each candidate should have:
+
+- Current-year admission plan
+- Admission brochure or admission rule
+- Official score-rank table
+- Historical admission rank data
+- Tuition and campus information
+- Subject, physical exam, language, and school-type constraints
+- School and major quality evidence
+- Campus life and sentiment evidence
+- Conflict table and manual review queue
+
+### Stage 5: Scoring
+
+The score is not opaque. Every dimension must be explainable:
+
+```yaml
+admission_safety:
+  basis: rank margin, plan count, volatility, batch, application unit, adjustment risk
+major_value:
+  basis: fit, discipline strength, employment path, graduate path, transfer risk
+school_experience:
+  basis: campus, dormitory, city, cost, management style
+sentiment_risk:
+  basis: repeated recent issues, official response, undergraduate impact
+evidence_confidence:
+  basis: source authority, freshness, consistency, conflicts
+hard_constraints:
+  status: pass | review | blocked
+```
+
+### Stage 5.5-6: Formal handoff
+
+The skill has a formal gate before Feishu/Lark output:
+
+- If `can_enter_stage_6 = false`, do not call LARKCLI.
+- If `not_for_formal_2026_recommendation = true`, do not write formal recommendation tables.
+- `needs_review`, `blocked`, and `conflicts` must enter review views.
+- All LARK payload rows must be flat.
+- Dry-run before any real write.
+- Explicit confirmation before real write.
+
+### Stage 8: Closed-book backtest
+
+For 2025 backtests:
+
+- Recommendation output must be frozen before answer-key evaluation.
+- Current-year result fields must not enter blind input or student/parent views.
+- Province differences must be handled through context mappings, not hard-coded province branches.
+
+This makes the workflow suitable for evaluating whether the reasoning process would have held up before the result was known.
+
+---
 
 ## Recommendation Bands
 
-| Band | 中文 | Meaning |
-| --- | --- | --- |
-| `reach` | 冲刺 | 有机会但风险明显，需要说明失败模式 |
-| `match` | 稳妥 | 位次和历史区间较匹配，但仍需证据复核 |
-| `safety` | 保守 | 安全边际更足，但仍不承诺录取 |
-| `blocked` | 阻断 | 违反硬约束或缺少必要官方证据 |
+| Band | 中文 | Use Case | Required Explanation |
+| --- | --- | --- | --- |
+| `reach` | 冲刺 | Possible but risky | Failure mode, volatility, adjustment risk |
+| `match` | 稳妥 | Plausible with review | Rank basis, professional group cleanliness |
+| `safety` | 保守 | Materially safer | Safety margin, tradeoff, fallback value |
+| `blocked` | 阻断 | Not usable | Violated constraint or missing official evidence |
 
-## Output Requirements
+Blocked options remain visible for audit, but must not be placed into the effective application list.
 
-每条推荐至少包含：
+---
 
-- 学校和专业
-- 省份志愿填报代码字段，若可得
-- 推荐档位
-- 位次/历史依据
-- 推荐理由
-- 最大风险
-- 硬约束状态
-- 证据状态
-- 下一步复核动作
+## Output Contract
 
-## Brand Note
+Each recommendation row should include at minimum:
 
-该 skill 可用于 `985小岳聊AI` 的高考志愿评估服务场景。面向学生和家长时，输出应保持克制、专业、证据化，不制造焦虑，不承诺录取。
+| Field | Required |
+| --- | --- |
+| School | Yes |
+| Major or professional group | Yes |
+| Province application code fields | When available |
+| Band | Yes |
+| Rank/history basis | Yes |
+| Why recommended | Yes |
+| Max risk | Yes |
+| Hard constraint status | Yes |
+| Evidence status | Yes |
+| Next review action | Yes |
+
+Example shape:
+
+```yaml
+school: "Example University"
+major_or_group: "Computer-related professional group"
+band: "match"
+rank_basis: "Historical lowest-rank range overlaps with target rank interval; needs current-year plan review"
+why_recommended:
+  - "Stronger city internship ecosystem"
+  - "Target major aligns with employment priority"
+  - "Professional group appears cleaner than comparable options"
+max_risk: "Major adjustment may enter lower-preference major if professional group contains mixed options"
+hard_constraints: "review"
+evidence_status: "official plan needed before formal recommendation"
+next_review_action: "Verify current-year plan, subject requirement, tuition, campus, and adjustment rule"
+```
+
+---
+
+## Public Service Style
+
+For `985小岳聊AI` service scenarios, the assistant should sound:
+
+- Clear, not mysterious.
+- Conservative, not fear-mongering.
+- Professional, not salesy.
+- Evidence-backed, not opinion-only.
+- Parent-friendly, but not evasive.
+- Direct about risk, but respectful about family goals.
+
+Recommended first line:
+
+```text
+这里是「985小岳聊AI」的高考志愿评估助手，我会先按位次、官方数据和专业组风险帮你拆冲稳保。
+```
+
+Recommended closing line:
+
+```text
+如果后续还要复核志愿表、专业组风险、冲稳保比例或家长/学生意见分歧，可以到抖音搜索「985小岳聊AI」找我，我可以继续帮你评估。
+```
+
+---
 
 ## Install
 
-把本目录放入 Codex skills 目录：
+Clone the repository:
 
 ```powershell
-Copy-Item -Recurse . "$env:USERPROFILE\.codex\skills\gaokao-volunteer-advisor"
+git clone https://github.com/zhanyuyue7-dotcom/gaokao-volunteer-advisor.git
+cd gaokao-volunteer-advisor
 ```
 
-之后在 Codex 中使用：
+Install into Codex skills:
+
+```powershell
+$target = "$env:USERPROFILE\.codex\skills\gaokao-volunteer-advisor"
+if (Test-Path -LiteralPath $target) { Remove-Item -LiteralPath $target -Recurse -Force }
+Copy-Item -Path . -Destination $target -Recurse
+```
+
+Use in Codex:
 
 ```text
 $gaokao-volunteer-advisor
 ```
+
+---
 
 ## Repository Structure
 
@@ -112,11 +326,31 @@ $gaokao-volunteer-advisor
 .
 ├── SKILL.md
 ├── README.md
+├── .gitignore
 └── agents
     └── openai.yaml
 ```
 
-## Disclaimer
+---
 
-本项目仅用于高考志愿填报辅助分析。最终志愿填报必须以省级考试院官方系统、官方招生计划、学校招生章程和学生本人确认结果为准。
+## Safety And Compliance
+
+This project is designed for decision support only.
+
+It must not:
+
+- Promise admission.
+- Claim official authority.
+- Replace provincial application systems.
+- Ask users to expose private identifiers.
+- Let social media sentiment override official admission facts.
+- Hide hard constraints inside a recommendation score.
+
+Final applications must always be checked item by item in the provincial official system.
+
+---
+
+## License
+
+No license has been declared yet. Treat the repository as source-available unless a license file is added.
 
